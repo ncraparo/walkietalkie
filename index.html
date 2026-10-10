@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Walkie Talkie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #dfe5e2;
+  --surface: #ecf0ee;
+  --field: #f6f8f7;
+  --ink: #15232b;
+  --muted: #566a73;
+  --line: #b4c2bc;
+  --tx: #d93b14;
+  --rx: #0f7f62;
+  --key: #15232b;
+  --key-ink: #eef3f1;
+  --key-edge: #070d10;
+  --danger: #b3261e;
+  --font: "Barlow Semi Condensed", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10181c;
+    --surface: #18232a;
+    --field: #0e1519;
+    --ink: #e6eef0;
+    --muted: #8fa5ae;
+    --line: #2c3c45;
+    --tx: #ff6a3d;
+    --rx: #35c9a1;
+    --key: #e6eef0;
+    --key-ink: #10181c;
+    --key-edge: #8da1a9;
+    --danger: #ff8a80;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10181c;
+  --surface: #18232a;
+  --field: #0e1519;
+  --ink: #e6eef0;
+  --muted: #8fa5ae;
+  --line: #2c3c45;
+  --tx: #ff6a3d;
+  --rx: #35c9a1;
+  --key: #e6eef0;
+  --key-ink: #10181c;
+  --key-edge: #8da1a9;
+  --danger: #ff8a80;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; }
+*, *::before, *::after { box-sizing: inherit; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.35;
+  -webkit-text-size-adjust: 100%;
+}
+.app {
+  height: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 18px 22px 22px;
+  display: flex;
+  flex-direction: column;
+}
+h1 {
+  font-size: 52px;
+  line-height: 0.95;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 28px 0 14px;
+}
+.lede { color: var(--muted); font-size: 20px; margin: 0 0 30px; max-width: 26ch; }
+label { display: block; font-weight: 600; font-size: 17px; margin: 0 0 6px; }
+.hint { color: var(--muted); font-size: 15px; font-weight: 500; margin: 6px 0 0; }
+input {
+  width: 100%;
+  height: 54px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 2px solid var(--line);
+  background: var(--field);
+  color: var(--ink);
+  font: inherit;
+  font-size: 20px;
+  font-weight: 600;
+}
+input:focus-visible, button:focus-visible { outline: 3px solid var(--rx); outline-offset: 3px; }
+.field { margin-bottom: 22px; }
+.primary {
+  width: 100%;
+  height: 60px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--key);
+  color: var(--key-ink);
+  font: inherit;
+  font-size: 22px;
+  font-weight: 700;
+  box-shadow: 0 5px 0 var(--key-edge);
+  cursor: pointer;
+}
+.primary:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--key-edge); }
+.primary:disabled { opacity: .6; }
+.note { min-height: 1.4em; margin: 16px 0 0; color: var(--danger); font-size: 16px; font-weight: 600; }
+.fine { margin-top: auto; color: var(--muted); font-size: 15px; padding-top: 18px; }
+
+/* radio screen */
+.radio { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.chip {
+  font-size: 17px; font-weight: 600; padding: 6px 14px; border-radius: 999px;
+  border: 2px solid var(--line); background: var(--surface); max-width: 60%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.linkbtn {
+  background: none; border: 0; color: var(--muted); font: inherit; font-weight: 600;
+  font-size: 17px; padding: 10px 4px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+.status { font-size: 34px; line-height: 1.05; font-weight: 700; margin: 26px 0 16px; min-height: 2.1em; }
+.meter { display: flex; align-items: center; gap: 4px; height: 52px; }
+.meter i {
+  flex: 1; height: 100%; border-radius: 3px; background: var(--line);
+  transform: scaleY(.12); transform-origin: 50% 50%; transition: background .2s;
+}
+.radio[data-mode="tx"] .meter i { background: var(--tx); animation: lvl .8s ease-in-out infinite; animation-delay: calc(var(--i) * -.11s); }
+.radio[data-mode="rx"] .meter i { background: var(--rx); animation: lvl .8s ease-in-out infinite; animation-delay: calc(var(--i) * -.11s); }
+.meter i:nth-child(3n) { animation-duration: .6s !important; }
+.meter i:nth-child(3n+1) { animation-duration: 1.05s !important; }
+@keyframes lvl { 0%, 100% { transform: scaleY(.15); } 50% { transform: scaleY(1); } }
+
+.keywrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 12px 0 8px; }
+.ptt {
+  position: relative;
+  width: min(72vw, 310px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  background: var(--key);
+  color: var(--key-ink);
+  font: inherit;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 12px 0 var(--key-edge), 0 24px 34px rgba(0,0,0,.22);
+  transition: transform .07s ease, box-shadow .07s ease, background .12s ease;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+.ptt::before {
+  content: ""; position: absolute; inset: 16px; border-radius: 50%;
+  border: 2px solid currentColor; opacity: .28; pointer-events: none;
+}
+.ptt svg { width: 56px; height: 56px; pointer-events: none; }
+.ptt span { font-size: 34px; font-weight: 700; line-height: 1; pointer-events: none; }
+.ptt:disabled { cursor: default; opacity: .55; }
+.radio[data-mode="tx"] .ptt {
+  background: var(--tx); color: #fff;
+  transform: translateY(10px); box-shadow: 0 2px 0 var(--key-edge), 0 8px 16px rgba(0,0,0,.22);
+}
+.radio[data-mode="rx"] .ptt { opacity: 1; box-shadow: 0 12px 0 var(--key-edge), 0 0 0 8px var(--rx); }
+.radio[data-mode="rx"] .ptt { animation: ring 1.4s ease-in-out infinite; }
+@keyframes ring { 0%, 100% { box-shadow: 0 12px 0 var(--key-edge), 0 0 0 5px var(--rx); } 50% { box-shadow: 0 12px 0 var(--key-edge), 0 0 0 14px var(--rx); } }
+.sound { margin: 0 auto; }
+@media (prefers-reduced-motion: reduce) {
+  .meter i, .ptt { animation: none !important; transition: none; }
+  .radio[data-mode="tx"] .meter i, .radio[data-mode="rx"] .meter i { transform: scaleY(.75); }
+}
+@media (max-height: 640px) { h1 { font-size: 40px; margin-top: 14px; } .lede { margin-bottom: 18px; } .status { font-size: 28px; margin: 14px 0 10px; } }
+</style>
+</head>
+<body>
+<main class="app">
+
+  <section id="join">
+    <h1>Walkie Talkie</h1>
+    <p class="lede">Hold the button to talk. The other person hears you live.</p>
+
+    <div class="field">
+      <label for="name">Your name</label>
+      <input id="name" type="text" maxlength="24" autocomplete="off" autocapitalize="words" placeholder="Nick">
+    </div>
+    <div class="field">
+      <label for="channel">Channel code</label>
+      <input id="channel" type="text" maxlength="12" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
+      <p class="hint">Share this code. Your partner enters the same one.</p>
+    </div>
+
+    <button id="joinBtn" class="primary" type="button">Join channel</button>
+    <p id="joinNote" class="note" role="status" aria-live="polite"></p>
+    <p class="fine">Your microphone stays muted until you hold the button.</p>
+  </section>
+
+  <section id="radio" class="radio" data-mode="wait" hidden>
+    <div class="bar">
+      <div class="chip" id="chLabel">Channel</div>
+      <button id="leaveBtn" class="linkbtn" type="button">Leave</button>
+    </div>
+
+    <div id="status" class="status" role="status" aria-live="polite">Connecting…</div>
+    <div class="meter" id="meter" aria-hidden="true"></div>
+    <p id="radioNote" class="note" role="status" aria-live="polite"></p>
+
+    <div class="keywrap">
+      <button id="ptt" class="ptt" type="button" disabled aria-label="Hold to talk">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="9" y="2.5" width="6" height="12" rx="3"></rect>
+          <path d="M5 11.5a7 7 0 0 0 14 0"></path>
+          <path d="M12 18.5V22"></path>
+        </svg>
+        <span id="pttLabel">Waiting…</span>
+      </button>
+    </div>
+    <button id="soundBtn" class="linkbtn sound" type="button" hidden>Tap to turn on sound</button>
+  </section>
+
+</main>
+<audio id="remoteAudio" autoplay playsinline></audio>
+
+<script>
+(function () {
+  "use strict";
+
+  var $ = function (id) { return document.getElementById(id); };
+  var els = {
+    join: $("join"), radio: $("radio"), name: $("name"), channel: $("channel"),
+    joinBtn: $("joinBtn"), joinNote: $("joinNote"), radioNote: $("radioNote"),
+    chLabel: $("chLabel"), leaveBtn: $("leaveBtn"), status: $("status"),
+    meter: $("meter"), ptt: $("ptt"), pttLabel: $("pttLabel"), soundBtn: $("soundBtn"),
+    audio: $("remoteAudio")
+  };
+
+  /* ---------- state ---------- */
+  var room = null, unsubs = [];
+  var state = { joined: false, ch: "", name: "" };
+  var myPeer = null, remote = null, partnerName = "";
+  var conn = null;
+  var localStream = null, micTrack = null;
+  var iTalk = false, remoteTalking = false;
+  var roomDown = false, downTimer = null;
+  var audioCtx = null, wake = null, joining = false;
+
+  var ICE = [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }];
+
+  /* ---------- helpers ---------- */
+  function rid() { return Math.random().toString(36).slice(2, 8); }
+  function byteLen(o) { return new TextEncoder().encode(JSON.stringify(o)).length; }
+  function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function safeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function cleanCode(s) { return String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12); }
+  function isUp(c) {
+    if (!c) return false;
+    var p = c.pc;
+    return p.connectionState === "connected" || p.iceConnectionState === "connected" || p.iceConnectionState === "completed";
+  }
+
+  for (var i = 0; i < 18; i++) {
+    var b = document.createElement("i");
+    b.style.setProperty("--i", i);
+    els.meter.appendChild(b);
+  }
+
+  els.name.value = safeGet("wt-name") || "";
+  els.channel.value = safeGet("wt-channel") || (Math.random().toString(36).replace(/[^a-z0-9]/g, "").slice(0, 4) || "line1");
+
+  /* ---------- sounds ---------- */
+  function beep(freqs, dur) {
+    if (!audioCtx) return;
+    try {
+      var t = audioCtx.currentTime;
+      freqs.forEach(function (f, i) {
+        var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = "sine"; o.frequency.value = f;
+        var s = t + i * dur;
+        g.gain.setValueAtTime(0.0001, s);
+        g.gain.exponentialRampToValueAtTime(0.28, s + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, s + dur);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(s); o.stop(s + dur + 0.02);
+      });
+    } catch (e) {}
+  }
+
+  function playRemote() {
+    var p = els.audio.play();
+    if (p && p.then) {
+      p.then(function () { els.soundBtn.hidden = true; }).catch(function () { els.soundBtn.hidden = false; });
+    }
+  }
+
+  /* ---------- rendering ---------- */
+  function render() {
+    if (!state.joined) return;
+    var up = isUp(conn);
+    var nm = partnerName || "Your partner";
+    var status, mode, label;
+    if (roomDown) { status = "Reconnecting to the channel…"; mode = "wait"; label = "Waiting…"; }
+    else if (!remote) { status = "Waiting for your partner on channel \u201C" + state.ch + "\u201D"; mode = "wait"; label = "Waiting…"; }
+    else if (!up) { status = nm + " is here. Connecting audio…"; mode = "wait"; label = "Connecting…"; }
+    else if (iTalk) { status = "You\u2019re talking"; mode = "tx"; label = "Talking…"; }
+    else if (remoteTalking) { status = nm + " is talking"; mode = "rx"; label = "Channel busy"; }
+    else { status = "Connected to " + nm; mode = "idle"; label = "Hold to talk"; }
+    els.status.textContent = status;
+    els.radio.dataset.mode = mode;
+    els.pttLabel.textContent = label;
+    els.ptt.disabled = !(mode === "idle" || mode === "tx");
+    els.ptt.setAttribute("aria-label", label);
+  }
+
+  /* ---------- talking ---------- */
+  function startTalk() {
+    if (iTalk || !state.joined || !isUp(conn) || !micTrack) return;
+    if (remoteTalking) { beep([260], 0.14); return; }
+    iTalk = true;
+    micTrack.enabled = true;
+    room.presence({ talking: true }).catch(function () {});
+    render();
+  }
+  function stopTalk() {
+    if (!iTalk) return;
+    iTalk = false;
+    if (micTrack) micTrack.enabled = false;
+    if (room) room.presence({ talking: false }).catch(function () {});
+    render();
+  }
+  function onRemoteTalking(on) {
+    if (on === remoteTalking) return;
+    remoteTalking = on;
+    if (on) { stopTalk(); beep([880, 1320], 0.06); playRemote(); }
+    else { beep([1320, 880], 0.05); }
+    render();
+  }
+
+  els.ptt.addEventListener("pointerdown", function (e) {
+    e.preventDefault();
+    if (els.ptt.disabled) return;
+    try { els.ptt.setPointerCapture(e.pointerId); } catch (err) {}
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    playRemote();
+    startTalk();
+  });
+  ["pointerup", "pointercancel", "lostpointercapture"].forEach(function (t) {
+    els.ptt.addEventListener(t, stopTalk);
+  });
+  els.ptt.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+  els.ptt.addEventListener("selectstart", function (e) { e.preventDefault(); });
+  window.addEventListener("keydown", function (e) {
+    if (e.code !== "Space" || e.repeat || !state.joined) return;
+    var tag = document.activeElement && document.activeElement.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+    e.preventDefault(); startTalk();
+  });
+  window.addEventListener("keyup", function (e) { if (e.code === "Space") stopTalk(); });
+  els.soundBtn.addEventListener("click", function () {
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    playRemote();
+  });
+
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) { stopTalk(); return; }
+    if (!state.joined) return;
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    requestWake();
+    if (els.audio.srcObject) playRemote();
+  });
+
+  /* ---------- wake lock ---------- */
+  function requestWake() {
+    try {
+      if (navigator.wakeLock && state.joined) {
+        navigator.wakeLock.request("screen").then(function (w) { wake = w; }).catch(function () {});
+      }
+    } catch (e) {}
+  }
+  function releaseWake() {
+    try { if (wake) wake.release(); } catch (e) {}
+    wake = null;
+  }
+
+  /* ---------- WebRTC connection ---------- */
+  function newConn(role, epoch) {
+    var pc = new RTCPeerConnection({ iceServers: ICE });
+    var c = {
+      pc: pc, role: role, epoch: epoch || rid(), local: [], localSdp: "",
+      remoteSet: false, applying: false, added: 0, remoteSigC: [],
+      timer: null, pubT: null, discT: null, closed: false
+    };
+    conn = c;
+    pc.addTrack(micTrack, localStream);
+    if (role === "offer") {
+      try {
+        var tr = pc.getTransceivers()[0];
+        var caps = RTCRtpReceiver.getCapabilities("audio");
+        var opus = caps.codecs.filter(function (x) { return /opus/i.test(x.mimeType); });
+        if (tr && tr.setCodecPreferences && opus.length) tr.setCodecPreferences(opus);
+      } catch (e) {}
+    }
+    pc.onicecandidate = function (ev) {
+      if (!ev.candidate || c.closed) return;
+      var s = ev.candidate.candidate;
+      if (!s || / tcp /i.test(s)) return;
+      if (c.local.length < 10) { c.local.push(s); schedulePublish(c); }
+    };
+    pc.ontrack = function (ev) {
+      els.audio.srcObject = (ev.streams && ev.streams[0]) || new MediaStream([ev.track]);
+      playRemote();
+    };
+    var onState = function () {
+      if (c.closed) return;
+      render();
+      var st = pc.connectionState;
+      if (isUp(c)) { clearTimeout(c.discT); clearTimeout(c.timer); }
+      if (st === "failed") restartSoon(c);
+      if (st === "disconnected") {
+        clearTimeout(c.discT);
+        c.discT = setTimeout(function () { if (!c.closed && !isUp(c)) restartSoon(c); }, 5000);
+      }
+    };
+    pc.onconnectionstatechange = onState;
+    pc.oniceconnectionstatechange = onState;
+    if (role === "offer") {
+      c.timer = setTimeout(function () { if (!c.closed && !isUp(c)) restartSoon(c); }, 14000);
+    }
+    return c;
+  }
+
+  function closeConn() {
+    var c = conn;
+    if (!c) return;
+    c.closed = true;
+    clearTimeout(c.timer); clearTimeout(c.pubT); clearTimeout(c.discT);
+    try { c.pc.close(); } catch (e) {}
+    conn = null;
+    try { els.audio.srcObject = null; } catch (e) {}
+    if (room && state.joined) room.presence({ sig: null }).catch(function () {});
+  }
+
+  // Only the offering side restarts; the answering side waits for a new offer.
+  function restartSoon(c) {
+    if (c.role !== "offer" || conn !== c) return;
+    closeConn();
+    render();
+    setTimeout(function () { if (state.joined && remote && !conn) startAsOffer(); }, 1500);
+  }
+
+  function schedulePublish(c) {
+    clearTimeout(c.pubT);
+    c.pubT = setTimeout(function () { publish(c); }, 200);
+  }
+
+  function publish(c) {
+    if (c.closed || !remote || !c.localSdp || !room) return;
+    var cands = c.local.slice();
+    var sig = { to: remote, role: c.role, e: c.epoch, sdp: c.localSdp, c: cands };
+    while (byteLen(sig) > 3500 && cands.length > 0) { cands = cands.slice(0, -1); sig.c = cands; }
+    room.presence({ sig: sig }).catch(function () {});
+  }
+
+  async function startAsOffer() {
+    if (conn || !remote || !micTrack) return;
+    var c = newConn("offer");
+    try {
+      var offer = await c.pc.createOffer();
+      if (c.closed) return;
+      await c.pc.setLocalDescription(offer);
+      if (c.closed) return;
+      c.localSdp = offer.sdp;
+      publish(c);
+    } catch (e) {
+      console.error(e);
+      if (!c.closed) restartSoon(c);
+    }
+  }
+
+  async function startAsAnswer(sig) {
+    closeConn();
+    var c = newConn("answer", sig.e);
+    c.remoteSigC = Array.isArray(sig.c) ? sig.c : [];
+    try {
+      await c.pc.setRemoteDescription({ type: "offer", sdp: sig.sdp });
+      if (c.closed) return;
+      c.remoteSet = true;
+      feedCands(c);
+      var ans = await c.pc.createAnswer();
+      if (c.closed) return;
+      await c.pc.setLocalDescription(ans);
+      if (c.closed) return;
+      c.localSdp = ans.sdp;
+      publish(c);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function applyAnswer(c, sig) {
+    if (c.remoteSet || c.applying) return;
+    c.applying = true;
+    try {
+      await c.pc.setRemoteDescription({ type: "answer", sdp: sig.sdp });
+      c.remoteSet = true;
+      feedCands(c);
+    } catch (e) { console.error(e); }
+    c.applying = false;
+  }
+
+  async function feedCands(c) {
+    if (!c.remoteSet) return;
+    while (!c.closed && c.added < (c.remoteSigC || []).length) {
+      var s = c.remoteSigC[c.added++];
+      if (typeof s !== "string" || s.length > 400) continue;
+      try { await c.pc.addIceCandidate({ candidate: s, sdpMLineIndex: 0 }); } catch (e) {}
+    }
+  }
+
+  /* ---------- who is here ---------- */
+  function onPeersChange() {
+    if (!room || !state.joined) return;
+    var list = room.peers();
+    var me = null;
+    for (var i = 0; i < list.length; i++) { if (list[i].isMe && list[i].sameTab) { me = list[i]; break; } }
+    if (!me) return;
+    myPeer = me.peer;
+
+    var others = list.filter(function (p) {
+      return !p.isMe && p.kind === "viewer" && p.presence && p.presence.ch === state.ch;
+    });
+    var partner = null;
+    for (var j = 0; j < others.length; j++) { if (others[j].peer === remote) { partner = others[j]; break; } }
+    if (!partner && others.length) {
+      partner = others.slice().sort(function (a, b) { return a.peer < b.peer ? -1 : 1; })[0];
+    }
+
+    els.radioNote.textContent = others.length > 1
+      ? "More than one other person is on this channel. Use a different code for a private line." : "";
+
+    if (!partner) {
+      if (remote) { closeConn(); remote = null; partnerName = ""; stopTalk(); onRemoteTalking(false); }
+      render();
+      return;
+    }
+    if (partner.peer !== remote) {
+      closeConn();
+      remote = partner.peer;
+      onRemoteTalking(false);
+    }
+    var pn = partner.presence.name;
+    partnerName = typeof pn === "string" ? pn.slice(0, 24) : "";
+    onRemoteTalking(partner.presence.talking === true);
+
+    var sig = partner.presence.sig;
+    var okSig = sig && typeof sig === "object" && sig.to === myPeer && typeof sig.sdp === "string" && sig.sdp.length < 4000;
+    var initiator = myPeer < remote;
+    if (initiator) {
+      if (!conn) startAsOffer();
+      if (conn && conn.role === "offer" && okSig && sig.role === "answer" && sig.e === conn.epoch) {
+        conn.remoteSigC = Array.isArray(sig.c) ? sig.c : [];
+        applyAnswer(conn, sig);
+        feedCands(conn);
+      }
+    } else if (okSig && sig.role === "offer" && typeof sig.e === "string") {
+      if (!conn || conn.epoch !== sig.e) startAsAnswer(sig);
+      else { conn.remoteSigC = Array.isArray(sig.c) ? sig.c : []; feedCands(conn); }
+    }
+    render();
+  }
+
+  function onRoomError() {
+    roomDown = true;
+    els.radioNote.textContent = "Lost the live channel. Reload the page to rejoin.";
+    render();
+  }
+
+  /* ---------- join / leave ---------- */
+  function micErrorText(err) {
+    var n = err && err.name;
+    if (n === "NotAllowedError" || n === "SecurityError") {
+      return "The microphone is blocked here. Allow it when your browser asks, then tap Join again. If it never asks, this view may not allow microphone access.";
+    }
+    if (n === "NotFoundError") return "No microphone was found on this device.";
+    if (err && err.message === "nomic") return "This browser can\u2019t access a microphone from this page.";
+    return "Couldn\u2019t start the microphone. Check your browser settings and try again.";
+  }
+
+  async function join() {
+    if (joining || state.joined) return;
+    joining = true;
+    els.joinBtn.disabled = true;
+    els.joinNote.textContent = "";
+
+    var name = (els.name.value.trim() || "Me").slice(0, 24);
+    var ch = cleanCode(els.channel.value);
+    if (!ch) {
+      els.joinNote.textContent = "Enter a channel code. You and your partner both use the same one.";
+      els.joinBtn.disabled = false; joining = false; return;
+    }
+
+    try {
+      // Unlock audio output from this tap.
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) { audioCtx = audioCtx || new AC(); if (audioCtx.resume) audioCtx.resume(); }
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.RTCPeerConnection) {
+        throw new Error("nomic");
+      }
+      localStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+      });
+      micTrack = localStream.getAudioTracks()[0];
+      micTrack.enabled = false;
+
+      els.joinNote.textContent = "Connecting to the channel…";
+      room = (window.claude && window.claude.use) ? await window.claude.use("room") : null;
+      if (!room) {
+        localStream.getTracks().forEach(function (t) { t.stop(); });
+        localStream = null; micTrack = null;
+        els.joinNote.textContent = "The live channel isn\u2019t available. Open this page while signed in to Claude, or ask the owner to invite you.";
+        els.joinBtn.disabled = false; joining = false; return;
+      }
+
+      safeSet("wt-name", els.name.value.trim());
+      safeSet("wt-channel", ch);
+      state = { joined: true, ch: ch, name: name };
+      els.chLabel.textContent = "Channel " + ch;
+      els.join.hidden = true;
+      els.radio.hidden = false;
+      els.radioNote.textContent = "";
+      roomDown = false;
+      render();
+
+      unsubs.push(room.onConnection(function (up) {
+        clearTimeout(downTimer);
+        if (up) { roomDown = false; render(); }
+        else { downTimer = setTimeout(function () { if (room && !room.connected()) { roomDown = true; render(); } }, 2500); }
+      }, onRoomError));
+      unsubs.push(room.onPeers(onPeersChange, onRoomError));
+      await room.presence({ ch: ch, name: name, talking: false });
+      requestWake();
+    } catch (err) {
+      console.error(err);
+      if (localStream) { localStream.getTracks().forEach(function (t) { t.stop(); }); }
+      localStream = null; micTrack = null;
+      els.joinNote.textContent = micErrorText(err);
+    }
+    els.joinBtn.disabled = false;
+    joining = false;
+  }
+
+  async function leave() {
+    stopTalk();
+    closeConn();
+    remote = null; partnerName = ""; remoteTalking = false;
+    unsubs.forEach(function (f) { try { f(); } catch (e) {} });
+    unsubs = [];
+    clearTimeout(downTimer);
+    try { if (room) await room.presence({ ch: null, name: null, talking: null, sig: null }); } catch (e) {}
+    if (localStream) localStream.getTracks().forEach(function (t) { t.stop(); });
+    localStream = null; micTrack = null; room = null;
+    releaseWake();
+    state = { joined: false, ch: "", name: "" };
+    els.radio.hidden = true;
+    els.join.hidden = false;
+    els.joinNote.textContent = "";
+  }
+
+  els.joinBtn.addEventListener("click", join);
+  els.leaveBtn.addEventListener("click", leave);
+  els.channel.addEventListener("keydown", function (e) { if (e.key === "Enter") join(); });
+  window.addEventListener("pagehide", function () {
+    if (localStream) localStream.getTracks().forEach(function (t) { t.stop(); });
+  });
+})();
+</script>
+</body>
+</html>
